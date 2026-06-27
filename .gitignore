@@ -1,0 +1,20 @@
+# Python/Jupyter
+.venv/
+venv/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+
+# Heavy datasets and parquet files
+*.csv
+*.parquet
+*.delta
+*.tmp
+data/*.csv
+
+# Heavy pickelled test datasets
+models/X_test.pkl
+models/y_test.pkl
+
+# Modeling metadata
+catboost_info/
