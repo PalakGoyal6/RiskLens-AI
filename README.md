@@ -5,7 +5,7 @@
 [![OpenAI](https://img.shields.io/badge/GPT--5%20mini-black?style=for-the-badge&logo=openai)](https://openai.com)
 [![CatBoost](https://img.shields.io/badge/CatBoost-1.2.10-red?style=for-the-badge)](https://catboost.ai)
 
-An end-to-end credit risk prediction platform built for loan officers. RiskLens AI scores loan applicants on default probability, explains every decision with SHAP, generates plain-English AI narrations, and maintains a full officer audit trail- deployed and live at [risklens-ai-2e1e.onrender.com](https://risklens-ai-2e1e.onrender.com).
+An end-to-end credit risk prediction platform built for loan officers. RiskLens AI scores loan applicants on default probability, explains every decision with SHAP, generates plain-English AI narrations, and maintains a full officer audit trail- deployed and live at <br> [risklens-ai-2e1e.onrender.com](https://risklens-ai-2e1e.onrender.com).
 
 > Credit default prediction is one of the most consequential applications of ML in finance. This project goes beyond model accuracy to build the full decision-support system a real bank would need- explainability, auditability, role-based access, and a user interface loan officers can actually use.
 
