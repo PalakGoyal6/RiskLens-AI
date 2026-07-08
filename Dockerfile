@@ -1,5 +1,5 @@
-# Use Python 3.10 slim base image for a smaller memory footprint
-FROM python:3.10-slim
+# Use Python 3.12 slim base image for a smaller memory footprint
+FROM python:3.12-slim
 
 # Install system dependencies required for lightgbm, xgboost, or catboost
 RUN apt-get update && apt-get install -y --no-install-recommends \
