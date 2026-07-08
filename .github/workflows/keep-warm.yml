@@ -1,0 +1,15 @@
+name: Keep Render Backend Warm
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # Runs every 10 minutes to prevent Render free-tier sleep (15 min idle timeout)
+  workflow_dispatch:      # Allows manual triggering of the workflow from GitHub UI
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping health endpoint
+        run: |
+          # Replace 'your-app' with your actual Render URL name when deploying
+          curl -f https://your-app.onrender.com/health || exit 0
