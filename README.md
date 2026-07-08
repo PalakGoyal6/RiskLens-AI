@@ -1,129 +1,254 @@
-# RiskLens AI — Explainable Credit Risk Dashboard & ML Pipeline
+# RiskLens AI — Explainable Credit Risk Intelligence Platform
 
-[![Live Site](https://img.shields.io/badge/Live%20Demo-Render-brightgreen?style=for-the-badge)](https://risklens-ai-2e1e.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-brightgreen?style=for-the-badge)](https://risklens-ai-2e1e.onrender.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5--mini-412991?style=for-the-badge&logo=openai)](https://openai.com/)
-[![ML Pipeline](https://img.shields.io/badge/CatBoost--1.2.10-red?style=for-the-badge)](https://catboost.ai)
+[![OpenAI](https://img.shields.io/badge/GPT--4o%20mini-black?style=for-the-badge&logo=openai)](https://openai.com)
+[![CatBoost](https://img.shields.io/badge/CatBoost-1.2.10-red?style=for-the-badge)](https://catboost.ai)
 
-An end-to-end, production-grade credit underwriting and risk assessment application. RiskLens AI combines a high-performance **CatBoost** binary classifier (trained on the 307K-record Home Credit dataset) with an interactive **FastAPI** web dashboard. It features **SHAP explainability**, dynamic **what-if simulation**, and an **LLM-powered underwriting assistant** to help loan officers interpret risk factors instantly and audit decision-making.
+An end-to-end credit risk prediction platform built for loan officers. RiskLens AI scores loan applicants on default probability, explains every decision with SHAP, generates plain-English AI narrations, and maintains a full officer audit trail — deployed and live at [risklens-ai-2e1e.onrender.com](https://risklens-ai-2e1e.onrender.com).
 
----
+> Credit default prediction is one of the most consequential applications of ML in finance. This project goes beyond model accuracy to build the full decision-support system a real bank would need — explainability, auditability, role-based access, and a user interface loan officers can actually use.
 
-## 🚀 Live Demo & Key Features
-
-👉 **Explore the Live Dashboard:** [https://risklens-ai-2e1e.onrender.com](https://risklens-ai-2e1e.onrender.com)
-
-*   **Interactive Underwriter Dashboard**: View pending loan applicants, sort by default risk, and review historical decisions.
-*   **Local SHAP Explainability**: Visualizes the exact positive/negative contributions of applicant features (e.g., Credit Bureau scores, debt-to-income, repayment delays) to their credit score.
-*   **Dynamic What-If Analysis**: Change applicant features (like decreasing loan annuity or increasing employment duration) and instantly recalculate default probability in real-time.
-*   **LLM Underwriting Assistant (OpenAI GPT-5-mini)**: Generates a human-friendly, 2-sentence risk summary identifying the top 3 credit risk factors in plain English, preventing loan officers from getting lost in raw features.
-*   **JWT Secure Session Management**: Includes authentication, role-based access control (Admin vs. Loan Officer), and a decision audit trail saved to an SQLite database.
+![RiskLens AI Dashboard](images/dashboard.png)
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## Live Demo
+
+**[risklens-ai-2e1e.onrender.com](https://risklens-ai-2e1e.onrender.com)** — click **"Continue as Demo User"** on the login page to explore without creating an account.
+
+The demo environment is pre-seeded with applicant profiles, past predictions, and officer decisions so every feature of the product is immediately visible.
+
+---
+
+## Features
+
+- **Real-time risk scoring** — CatBoost model scores any applicant instantly via REST API, achieving ROC-AUC of 0.781 on a holdout set of 61K+ loans
+- **SHAP explainability** — global feature importance bar chart, beeswarm plot, and per-applicant waterfall chart showing exactly which factors drove each score
+- **Live what-if simulation** — drag sliders to modify applicant features (credit scores, income, debt ratios) and watch the risk prediction and SHAP values update in real time
+- **AI underwriting assistant** — GPT-4o mini chatbot with function-calling for applicant lookup, what-if simulation, and decision history queries — scoped strictly to the open applicant
+- **AI decision narration** — auto-generated 2-sentence plain-English summary of every prediction, stored alongside the score in the audit log
+- **Full audit trail** — every prediction, officer decision, override note, and AI narration logged with timestamp and officer ID
+- **Auth + role-based access** — JWT-based authentication with role separation: Loan Officer, Risk Analyst, Admin
+- **Probability calibration validated** — reliability diagram confirms raw CatBoost probabilities are well-calibrated (mean gap < 4%); Platt scaling evaluated and deliberately not applied
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| ML Model | CatBoost (tuned via RandomizedSearchCV), SHAP |
+| Backend | FastAPI, Python 3.12, Uvicorn |
+| Frontend | Vanilla HTML5, CSS3, JavaScript |
+| Database | SQLite |
+| Auth | Custom JWT (python-jose) |
+| AI Layer | OpenAI GPT-4o mini (function-calling) |
+| Deployment | Docker on Render |
+
+---
+
+## Architecture
 
 ```
-        +-------------------------------------------------------+
-        |                 Frontend (HTML5/Vanilla CSS/JS)       |
-        +-------------------------------------------------------+
-                                    | (JWT Authentication / REST API)
-                                    v
-        +-------------------------------------------------------+
-        |                 FastAPI Application Server            |
-        +-------------------------------------------------------+
-           |                         |                        |
-           v (Predict / SHAP)        v (Narration Prompt)     v (Audit Trail)
-  +------------------+      +-------------------+     +-----------------+
-  |  CatBoost Model  |      | OpenAI GPT-5-mini |     |  SQLite DB      |
-  |  & SHAP Engine   |      | (via Azure API)   |     |  (credit_risk)  |
-  +------------------+      +-------------------+     +-----------------+
++-------------------------------------------------------+
+|         Frontend (HTML5 / CSS3 / Vanilla JS)          |
+|  Landing · Login · Dashboard · SHAP · Chatbot · Audit |
++-------------------------------------------------------+
+                        |
+            JWT Authentication / REST API
+                        |
+                        v
++-------------------------------------------------------+
+|              FastAPI Application Server               |
++-------------------------------------------------------+
+        |                    |                   |
+        v                    v                   v
++---------------+   +----------------+   +----------------+
+| CatBoost Model|   | OpenAI GPT-4o  |   | SQLite DB      |
+| + SHAP Engine |   | mini (Chatbot  |   | Users ·        |
+|               |   | + Narration)   |   | Predictions ·  |
++---------------+   +----------------+   | Decisions      |
+                                         +----------------+
 ```
-
-*   **Backend**: FastAPI, Uvicorn, Python 3.12 (asynchronous, high-performance API server).
-*   **Frontend**: Vanilla HTML5, CSS3 (Modern Glassmorphism & Dark Mode UI), and JavaScript.
-*   **Database**: SQLite (local schema tracking Users, Sessions, Predictions, and Decisions).
-*   **AI/LLM**: OpenAI GPT-5-mini (used for natural language underwriting explanations).
-*   **Deployment**: Docker-packaged and deployed on **Render Free Web Service**, kept warm using a **GitHub Actions keep-warm ping workflow** running every 10 minutes.
 
 ---
 
-## 📊 Machine Learning Pipeline
+## ML Pipeline
 
-The backend is backed by an end-to-end reproducible machine learning pipeline (available in the `notebooks/` directory) trained on Kaggle's **Home Credit Default Risk** dataset:
+End-to-end reproducible pipeline across 4 notebooks (see `notebooks/` directory), trained on Kaggle's **Home Credit Default Risk** dataset (307,511 loan applications across 8 relational tables).
 
-1.  **Business Understanding & EDA**: Analyzed extreme class imbalance (~91.8% repaid, ~8.2% default) and identified feature distributions.
-2.  **Feature Engineering**: Created custom interaction metrics including `EXT_SOURCE_MEAN`, `CREDIT_INCOME_RATIO`, and `CREDIT_TERM` along with transactional aggregations (POS Cash, credit card utilization trends, delinquency delays).
-3.  **Automated Feature Selection**: Combined 4 feature importance methods (Lasso L1, XGBoost Importance, Target Correlation, and Recursive Feature Elimination) to filter down to the most robust predictors.
-4.  **Ensemble Tuning**: Tuned LightGBM, XGBoost, and CatBoost models. CatBoost was dynamically selected as the best classifier.
-5.  **Threshold Optimization**: Shifted the decision threshold from `0.50` to `0.15` to optimize the F1-score, reducing False Negatives (unapproved defaulters) and maximizing credit profit metrics.
+### Pipeline Stages
 
-### Model Metrics (Holdout Test Set)
+**1. Business Understanding & EDA**
+Analyzed extreme class imbalance (~91.8% repaid, ~8.2% default), missing value profiles, and numeric distributions. Identified anomalies including `DAYS_EMPLOYED = 365243` encoding missing employment as a sentinel value.
+
+**2. Feature Engineering**
+Computed customer-level aggregations from transactional tables (POS Cash, credit card utilization, installment delays, bureau delinquency trends). Created interaction features including `EXT_SOURCE_MEAN`, `CREDIT_INCOME_RATIO`, and `CREDIT_TERM`. Expanded from 120 raw variables to 215+ engineered features.
+
+**3. Automated Feature Selection**
+Filtered 215+ candidate features using 4 independent methods — Lasso L1 regularization, XGBoost feature importance, target correlation analysis, and Recursive Feature Elimination. Retained features selected by at least 2 of 4 methods to maximize generalization.
+
+**4. Model Training & Tuning**
+Benchmarked Logistic Regression, Random Forest, XGBoost, LightGBM, and CatBoost. Tuned top models via `RandomizedSearchCV`. CatBoost dynamically selected as best by cross-validated ROC-AUC.
+
+**5. Threshold Optimization & Calibration**
+Shifted classification threshold from default 0.50 to 0.15 to account for class imbalance, improving recall from ~7% to 45%. Validated probability calibration via reliability diagram — confirmed mean gap < 4%, so raw probabilities were retained as the most accurate and principled choice.
+
+### Model Performance (Holdout Test Set — 20% split, never seen during training)
 
 | Metric | Score | Note |
-| :--- | :--- | :--- |
-| **ROC-AUC** | **0.781** | Strong discriminative capability |
-| **Recall** | **0.450** | Catches 45% of actual defaults (up from ~7% at a 0.50 threshold) |
-| **F1 Score** | **0.334** | Optimal balance for the highly imbalanced target |
+|---|---|---|
+| **ROC-AUC** | **0.781** | Strong discriminative capability across all thresholds |
+| **Recall** | **0.450** | Catches 45% of actual defaulters (up from ~7% at threshold 0.50) |
+| **Precision** | 0.266 | Low false-alarm rate relative to class imbalance |
+| **F1 Score** | 0.334 | Optimal balance for 8.2% positive class rate |
+
+### Baseline vs. Tuned Model Comparison (5-Fold Cross-Validation)
+
+| Model | Baseline ROC-AUC | Tuned ROC-AUC |
+|---|---|---|
+| **CatBoost** | 0.747 | **0.769** |
+| XGBoost | 0.745 | 0.765 |
+| LightGBM | 0.743 | 0.761 |
+| Random Forest | 0.713 | — |
+| Logistic Regression | 0.706 | — |
 
 ---
 
-## ⚙️ Installation & Local Setup
+## Key Findings
+
+**Credit bureau scores dominate default prediction.**
+EXT_SOURCE_2, EXT_SOURCE_3, and EXT_SOURCE_1 were the top 3 features by mean absolute SHAP value (0.298, 0.275, and 0.151 respectively), dwarfing all engineered features. Bureau integration is the single highest-leverage data investment for any lender.
+
+**Threshold optimization is the real business lever.**
+At the default 0.50 threshold, the model caught only ~7% of defaulters. Shifting to 0.15 improved recall to 45% — identifying 6x more actual defaulters, directly reducing expected write-off losses at the cost of more conservative approvals.
+
+**Platt scaling was evaluated and deliberately rejected.**
+A reliability diagram confirmed raw CatBoost probabilities are already well-calibrated (mean gap < 4%). Applying Platt scaling increased the Brier score from 0.0661 to 0.0674 — making predictions less accurate. Raw probabilities were retained as the principled choice.
+
+**Ensemble stacking added no value.**
+A weighted ensemble of CatBoost, LightGBM, and XGBoost was evaluated — the optimizer assigned near-zero weight to LightGBM and XGBoost due to high inter-model correlation. CatBoost alone was retained.
+
+---
+
+## Screenshots
+
+| Dashboard | SHAP Explainability |
+|---|---|
+| ![Dashboard](images/dashboard.png) | ![SHAP](images/shap_waterfall.png) |
+
+| AI Chatbot | Calibration Curve |
+|---|---|
+| ![Chatbot](images/chatbot.png) | ![Calibration](images/calibration.png) |
+
+---
+
+## Local Setup
 
 ### Prerequisites
-Make sure Python (>= 3.12) is installed.
+Python >= 3.12
 
-### Setup Environment
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/PalakGoyal6/RiskLens-AI.git
-    cd RiskLens-AI
-    ```
-2.  Create and activate a virtual environment:
-    ```bash
-    python -m venv .venv
-    # Windows:
-    .venv\Scripts\activate
-    # macOS/Linux:
-    source .venv/bin/activate
-    ```
-3.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+### Setup
+
+```bash
+git clone https://github.com/PalakGoyal6/RiskLens-AI.git
+cd RiskLens-AI
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
 ### Initialize Database
-Run the setup script to generate the SQLite database and seed initial test users and applicant records:
+
 ```bash
 python init_db.py
 ```
 
+Generates the SQLite database and seeds initial test users and applicant records.
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+JWT_SECRET=your_jwt_secret_key
+```
+
 ### Start Development Server
+
 ```bash
 uvicorn server:app --reload --port 8000
 ```
+
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 
----
+### Run ML Pipeline Notebooks
 
-## 🔒 Environment Variables
-Create a `.env` file in the root directory to store your API keys and secrets:
-```env
-OPENAI_API_KEY=your-openai-api-key-here
-OPENAI_BASE_URL=your-openai-azure-custom-endpoint-if-applicable
-LLM_MODEL=gpt-5-mini
-JWT_SECRET=super-secret-key-for-credit-risk-token-signing
-```
-
----
-
-## 📈 Pipeline Development Notebooks
-If you want to view or compile the Jupyter Notebooks for the model pipeline:
 ```bash
-# Compile Python scripts into Jupyter Notebooks
 python build_nb01.py
 python build_nb02.py
 python build_nb03.py
 python build_nb04.py
 ```
-Notebooks will be generated in the `notebooks/` directory for step-by-step exploration.
+
+Notebooks are generated in `notebooks/` for step-by-step pipeline exploration.
+
+---
+
+## Deployment
+
+Dockerized and deployed on **Render Free Web Service**.
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+A GitHub Actions workflow pings the service every 10 minutes to prevent cold starts on Render's free tier.
+
+---
+
+## Repository Structure
+
+```
+risklens-ai/
+├── server.py                  # FastAPI app, endpoints, chatbot, narration
+├── init_db.py                 # Database schema + demo data seeding
+├── Dockerfile
+├── requirements.txt
+├── .env.example
+├── static/
+│   ├── index.html             # Main dashboard
+│   ├── index.js               # Frontend logic, SHAP charts, chatbot UI
+│   └── styles.css
+├── models/
+│   └── catboost_model.pkl
+├── data/
+│   └── calibration_data.json
+├── notebooks/
+│   ├── 01_BusinessUnderstanding_EDA.ipynb
+│   ├── 02_DataCleaning_FeatureEngineering.ipynb
+│   ├── 03_ModelTraining.ipynb
+│   └── 04_Explainability_Calibration.ipynb
+└── images/
+    ├── dashboard.png
+    ├── shap_waterfall.png
+    ├── chatbot.png
+    └── calibration.png
+```
+
+---
+
+## Author
+
+Built by **[Your Name]** as a portfolio project demonstrating end-to-end ML engineering, full-stack deployment, and responsible AI practices in financial services.
+
+- [LinkedIn](https://linkedin.com/in/yourprofile)
+- [GitHub](https://github.com/PalakGoyal6)
