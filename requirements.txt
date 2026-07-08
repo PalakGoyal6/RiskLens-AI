@@ -19,3 +19,11 @@ shap==0.52.0
 
 # Notebook Compilation
 nbformat==5.10.4
+
+# API & Web Server
+fastapi
+uvicorn
+pydantic
+python-jose[cryptography]
+python-multipart
+google-genai
