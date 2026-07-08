@@ -1,166 +1,122 @@
-# Credit Risk Prediction ML Pipeline
+# RiskLens AI — Explainable Credit Risk Dashboard & ML Pipeline
 
-An end-to-end, production-grade machine learning pipeline for predicting loan default using the Home Credit Default Risk dataset. This project processes raw financial datasets, engineers advanced aggregations and interaction terms, runs automated feature selection, tunes gradient-boosted ensembles, and provides model explainability via SHAP.
+[![Live Site](https://img.shields.io/badge/Live%20Demo-Render-brightgreen?style=for-the-badge)](https://risklens-ai-2e1e.onrender.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Gemini](https://img.shields.io/badge/Gemini%20AI-blue?style=for-the-badge&logo=google)](https://ai.google.dev/)
+[![ML Pipeline](https://img.shields.io/badge/CatBoost--1.2.10-red?style=for-the-badge)](https://catboost.ai)
 
----
-
-## 1. Project Overview & Problem Statement
-
-In consumer lending, predicting the probability of loan default is critical. Financial institutions must balance two competing risks:
-1. **Credit Risk (Type I Error / False Negative):** Approving a borrower who will default, leading to direct write-off losses.
-2. **Opportunity Loss (Type II Error / False Positive):** Rejecting a creditworthy borrower, leading to lost interest revenue.
-
-**Goal:** Develop a robust binary classifier to predict `TARGET` (0 = Repaid, 1 = Default / Payment Difficulties) and optimize the classification threshold to maximize business profitability.
+An end-to-end, production-grade credit underwriting and risk assessment application. RiskLens AI combines a high-performance **CatBoost** binary classifier (trained on the 307K-record Home Credit dataset) with an interactive **FastAPI** web dashboard. It features **SHAP explainability**, dynamic **what-if simulation**, and an **LLM-powered underwriting assistant** to help loan officers interpret risk factors instantly and audit decision-making.
 
 ---
 
-## 2. Dataset & Structure
+## 🚀 Live Demo & Key Features
 
-The pipeline uses the public **Home Credit Default Risk** dataset, which consists of multiple relational tables:
-- **`application_train/test`:** Main application details (income, credit amount, annuities, family status, etc.).
-- **`bureau` & `bureau_balance`:** Historical credit bureau data for active/closed loans outside Home Credit.
-- **`previous_application`:** Previous applications for Home Credit loans.
-- **`installments_payments`:** Detailed installment payment history for previous loans.
-- **`POS_CASH_balance` & `credit_card_balance`:** Monthly credit card and point-of-sale loan balance histories.
+👉 **Explore the Live Dashboard:** [https://risklens-ai-2e1e.onrender.com](https://risklens-ai-2e1e.onrender.com)
 
-### Data Characteristics
-- **Observations:** 307,511 loans (in training set).
-- **Target Imbalance:** Highly imbalanced (~91.8% repaid, ~8.2% default).
-- **Features:** Over 120 raw variables, expanded to **215+** via advanced feature engineering.
+*   **Interactive Underwriter Dashboard**: View pending loan applicants, sort by default risk, and review historical decisions.
+*   **Local SHAP Explainability**: Visualizes the exact positive/negative contributions of applicant features (e.g., Credit Bureau scores, debt-to-income, repayment delays) to their credit score.
+*   **Dynamic What-If Analysis**: Change applicant features (like decreasing loan annuity or increasing employment duration) and instantly recalculate default probability in real-time.
+*   **LLM Underwriting Assistant (Gemini 2.5 Flash)**: Generates a human-friendly, 2-sentence risk summary identifying the top 3 credit risk factors in plain English, preventing loan officers from getting lost in raw features.
+*   **JWT Secure Session Management**: Includes authentication, role-based access control (Admin vs. Loan Officer), and a decision audit trail saved to an SQLite database.
 
 ---
 
-## 3. Machine Learning Pipeline Architecture
-
-The workflow is structured into 4 sequential, highly reproducible Jupyter notebooks:
+## 🛠️ Tech Stack & Architecture
 
 ```
-    Business Understanding & EDA
-                 ↓
-    Data Cleaning & Feature Engineering
-                 ↓
-        Feature Selection (L1 + Tree + RFE)
-                 ↓
-    Model Training & Tuning (CatBoost/LightGBM/XGBoost)
-                 ↓
-      Threshold Optimization & SHAP Explainability
+        +-------------------------------------------------------+
+        |                 Frontend (HTML5/Vanilla CSS/JS)       |
+        +-------------------------------------------------------+
+                                    | (JWT Authentication / REST API)
+                                    v
+        +-------------------------------------------------------+
+        |                 FastAPI Application Server            |
+        +-------------------------------------------------------+
+           |                         |                        |
+           v (Predict / SHAP)        v (Narration Prompt)     v (Audit Trail)
+  +------------------+      +-------------------+     +-----------------+
+  |  CatBoost Model  |      |   Gemini 2.5      |     |  SQLite DB      |
+  |  & SHAP Engine   |      |   Flash API       |     |  (credit_risk)  |
+  +------------------+      +-------------------+     +-----------------+
 ```
 
----
-
-## 4. Pipeline Walkthrough
-
-### [01. Business Understanding & EDA](notebooks/01_BusinessUnderstanding_EDA.ipynb)
-- Outlines the commercial lending objectives and key metrics.
-- Examines class imbalance, missing value profiles, and numeric distributions.
-- Identifies important anomalies (e.g., `DAYS_EMPLOYED` value `365243` representing missing values).
-
-### [02. Data Cleaning, Feature Engineering & Feature Selection](notebooks/02_DataCleaning_FeatureEngineering_FeatureSelection.ipynb)
-- **Data Cleaning:** Imputes missing values with robust median values and flags employment anomalies.
-- **Advanced Aggregations:** Computes customer-level aggregations from transactional tables (POS Cash, credit card utilization, installment delays, and bureau delinquency trends).
-- **Interaction Engineering:** Creates critical interaction features including `EXT_SOURCE_MEAN`, `CREDIT_INCOME_RATIO`, and `CREDIT_TERM`.
-- **Feature Selection:** Filters the 215+ candidate features using 4 methods:
-  1. *Correlation Analysis* (target correlation >= 0.02)
-  2. *XGBoost feature importance* (top 90% cumulative importance)
-  3. *Recursive Feature Elimination (RFE)* using Logistic Regression
-  4. *Lasso (L1) Regularization* (non-zero coefficients)
-  - *Result:* Keeps features selected by **at least 2 of the 4 methods** to create a robust, generalized feature set.
-- **Dimensionality Reduction:** Evaluates PCA (Explained Variance) and LDA separation boundary.
-
-### [03. Model Training & Tuning](notebooks/03_ModelTraining.ipynb)
-- Splits data into an 80/20 train/test split.
-- Compares baseline models: Logistic Regression, Random Forest, XGBoost, LightGBM, and CatBoost.
-- Tunes hyperparameters for the top boosting models using `RandomizedSearchCV`.
-- **Dynamically selects the best model** (ranked by cross-validated ROC-AUC) and fits it on the entire training set.
-
-### [04. Model Evaluation & Explainability](notebooks/04_ModelEvaluation_Explainability.ipynb)
-- Computes ROC and Precision-Recall curves.
-- **Threshold Optimization:** Scans probability cutoffs to maximize the F1-score, shifting the classification threshold from the default `0.50` to `0.15` to account for class imbalance.
-- Explains model predictions locally and globally using **SHAP** beeswarm and bar plots.
-- Summarizes business insights and underwriting recommendations.
+*   **Backend**: FastAPI, Uvicorn, Python 3.12 (asynchronous, high-performance API server).
+*   **Frontend**: Vanilla HTML5, CSS3 (Modern Glassmorphism & Dark Mode UI), and JavaScript.
+*   **Database**: SQLite (local schema tracking Users, Sessions, Predictions, and Decisions).
+*   **AI/LLM**: Google GenAI SDK (Gemini 2.5 Flash for natural language underwriting support).
+*   **Deployment**: Docker-packaged and deployed on **Render Free Web Service**, kept warm using a **GitHub Actions keep-warm ping workflow** running every 10 minutes.
 
 ---
 
-## 5. Model Performance & Results
+## 📊 Machine Learning Pipeline
 
-### Baseline vs. Tuned Model Comparison (5-Fold Cross-Validation)
+The backend is backed by an end-to-end reproducible machine learning pipeline (available in the `notebooks/` directory) trained on Kaggle's **Home Credit Default Risk** dataset:
 
-| Model | Baseline ROC-AUC | Tuned ROC-AUC |
-| :--- | :--- | :--- |
-| **CatBoost** | 0.747 | **0.769** |
-| **XGBoost** | 0.745 | 0.765 |
-| **LightGBM** | 0.743 | 0.761 |
-| **Random Forest** | 0.713 | — |
-| **Logistic Regression** | 0.706 | — |
+1.  **Business Understanding & EDA**: Analyzed extreme class imbalance (~91.8% repaid, ~8.2% default) and identified feature distributions.
+2.  **Feature Engineering**: Created custom interaction metrics including `EXT_SOURCE_MEAN`, `CREDIT_INCOME_RATIO`, and `CREDIT_TERM` along with transactional aggregations (POS Cash, credit card utilization trends, delinquency delays).
+3.  **Automated Feature Selection**: Combined 4 feature importance methods (Lasso L1, XGBoost Importance, Target Correlation, and Recursive Feature Elimination) to filter down to the most robust predictors.
+4.  **Ensemble Tuning**: Tuned LightGBM, XGBoost, and CatBoost models. CatBoost was dynamically selected as the best classifier.
+5.  **Threshold Optimization**: Shifted the decision threshold from `0.50` to `0.15` to optimize the F1-score, reducing False Negatives (unapproved defaulters) and maximizing credit profit metrics.
 
-*CatBoost was dynamically selected as the best overall model.*
-
-### Final Holdout Test Evaluation (Optimized Threshold = 0.15)
+### Model Metrics (Holdout Test Set)
 
 | Metric | Score | Note |
 | :--- | :--- | :--- |
 | **ROC-AUC** | **0.781** | Strong discriminative capability |
-| **Precision** | 0.266 | Low false-alarm impact |
-| **Recall** | **0.450** | Catches 45% of actual defaulters (up from ~7% at threshold 0.50) |
-| **F1 Score** | 0.334 | Optimal balance for imbalanced target |
+| **Recall** | **0.450** | Catches 45% of actual defaults (up from ~7% at a 0.50 threshold) |
+| **F1 Score** | **0.334** | Optimal balance for the highly imbalanced target |
 
 ---
 
-## 6. Visualizations
-
-The pipeline automatically exports publication-quality plots to the `images/` directory:
-
-### Correlation Heatmap of Risk Factors
-![Correlation Heatmap](images/correlation_heatmap.png)
-
-### ROC & Precision-Recall Curves
-![ROC Curve](images/roc_curve.png)
-![Precision-Recall Curve](images/precision_recall.png)
-
-### Confusion Matrix (Threshold = 0.15)
-![Confusion Matrix](images/confusion_matrix.png)
-
-### SHAP Explainability & Feature Importance
-![SHAP Summary Plot](images/shap_summary.png)
-![SHAP Global Bar Plot](images/shap_bar.png)
-
----
-
-## 7. Key Business Insights
-
-1. **Credit Bureau Integration is Crucial:** The external credit risk scores (`EXT_SOURCE_1`, `EXT_SOURCE_2`, `EXT_SOURCE_3`) are the most powerful predictors of default. Underwriters should prioritize credit bureau integration.
-2. **Repayment delays are early warnings:** Variables like `LATE_PAYMENT_RATIO` and `MAX_PAYMENT_DELAY` are strong signals of delinquency. Customers with late payment frequencies > 15% should face credit limits reduction.
-3. **Debt-to-Income Term constraints risk:** Ratios such as `CREDIT_TERM` (annuity-to-credit ratio) and `CREDIT_INCOME_RATIO` capture credit risk significantly better than raw values, demonstrating the effectiveness of feature engineering.
-
----
-
-## 8. Installation & Usage
+## ⚙️ Installation & Local Setup
 
 ### Prerequisites
-Make sure Python (>= 3.9) is installed.
+Make sure Python (>= 3.12) is installed.
 
 ### Setup Environment
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/home-credit-default-risk.git
-   cd home-credit-default-risk
-   ```
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/PalakGoyal6/RiskLens-AI.git
+    cd RiskLens-AI
+    ```
+2.  Create and activate a virtual environment:
+    ```bash
+    python -m venv .venv
+    # Windows:
+    .venv\Scripts\activate
+    # macOS/Linux:
+    source .venv/bin/activate
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### Download Dataset
-1. Download all dataset files from [Kaggle](https://www.kaggle.com/competitions/home-credit-default-risk/data).
-2. Place all CSV files directly inside the `data/` folder.
+### Initialize Database
+Run the setup script to generate the SQLite database and seed initial test users and applicant records:
+```bash
+python init_db.py
+```
 
-### Run Pipeline
-Compile the notebooks using the build scripts, and then open Jupyter Lab/Notebook to run them sequentially:
+### Start Development Server
+```bash
+uvicorn server:app --reload --port 8000
+```
+Open [http://localhost:8000](http://localhost:8000) in your browser.
+
+---
+
+## 🔒 Environment Variables
+Create a `.env` file in the root directory to store your API keys and secrets:
+```env
+GEMINI_API_KEY=your-gemini-api-key-here
+JWT_SECRET=super-secret-key-for-credit-risk-token-signing
+```
+
+---
+
+## 📈 Pipeline Development Notebooks
+If you want to view or compile the Jupyter Notebooks for the model pipeline:
 ```bash
 # Compile Python scripts into Jupyter Notebooks
 python build_nb01.py
@@ -168,11 +124,4 @@ python build_nb02.py
 python build_nb03.py
 python build_nb04.py
 ```
-After compilation, open Jupyter to run the notebooks under the `notebooks/` directory.
-
----
-
-## 9. Future Work
-- **Ensemble Stacking:** Build a meta-estimator combining CatBoost, XGBoost, and LightGBM predictions.
-- **API Deployment:** Develop a FastAPI microservice to expose the model for real-time risk assessments.
-- **Model Monitoring:** Implement concept drift tracking using libraries like Evidently.
+Notebooks will be generated in the `notebooks/` directory for step-by-step exploration.
