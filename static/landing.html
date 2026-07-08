@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskLens AI — Explainable Credit Risk Underwriting</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Shared design system with the dashboard */
+        :root {
+            --bg-color: #0b0f19;
+            --sidebar-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --card-border-glow: rgba(99, 102, 241, 0.15);
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            --accent-blue: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-teal: #14b8a6;
+            --accent-crimson: #f43f5e;
+            --accent-gold: #eab308;
+
+            --font-primary: 'Inter', sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Ambient glowing backgrounds */
+        .ambient-glow-1 {
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .ambient-glow-2 {
+            position: absolute;
+            top: 600px;
+            left: -300px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, rgba(56, 189, 248, 0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Header Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            color: var(--accent-indigo);
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+        }
+
+        .logo-text {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-accent {
+            color: var(--accent-indigo);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .btn-login {
+            background-color: var(--accent-indigo);
+            color: #ffffff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.15);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Hero Container */
+        .hero-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px 40px 24px;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 40px;
+            align-items: center;
+            min-height: calc(100vh - 180px);
+        }
+
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .hero-badge {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--accent-indigo);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        .hero-headline {
+            font-family: var(--font-heading);
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text-primary) 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subheadline {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 36px;
+            max-width: 580px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .btn-hero-primary {
+            background-color: var(--accent-indigo);
+            color: #ffffff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.15);
+            box-shadow: 0 0 24px rgba(99, 102, 241, 0.6);
+        }
+
+        .btn-hero-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-hero-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .hero-right {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-screenshot-wrapper {
+            position: relative;
+            border-radius: 16px;
+            padding: 4px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(56, 189, 248, 0.05) 100%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            transform: perspective(1000px) rotateY(-8deg) rotateX(4deg) scale(1.02);
+            transition: transform 0.4s ease;
+        }
+
+        .hero-screenshot-wrapper:hover {
+            transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.05);
+        }
+
+        .hero-screenshot {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Stats Bar */
+        .stats-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(15, 23, 42, 0.2);
+            padding: 32px 24px;
+            width: 100%;
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            text-align: center;
+        }
+
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-number {
+            font-family: var(--font-heading);
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Features Section */
+        .features-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 24px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-family: var(--font-heading);
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background-color: #1a1f2e;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 36px 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.25);
+            background: linear-gradient(180deg, #111827 0%, rgba(30, 41, 59, 0.2) 100%);
+            box-shadow: 0 12px 24px -10px rgba(99, 102, 241, 0.15);
+        }
+
+        .feature-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .feature-icon {
+            font-size: 1.3rem;
+            color: var(--accent-indigo);
+            filter: drop-shadow(0 0 4px rgba(99, 102, 241, 0.4));
+        }
+
+        .feature-title {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .feature-body {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        /* How It Works Section */
+        .how-section {
+            background: rgba(15, 23, 42, 0.15);
+            border-top: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--card-border);
+            padding: 100px 24px;
+        }
+
+        .how-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            position: relative;
+        }
+
+        /* Connecting line for flow chart steps */
+        .flow-grid::after {
+            content: '';
+            position: absolute;
+            top: 60px;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.25) 50%, rgba(99, 102, 241, 0.05) 100%);
+            z-index: 1;
+        }
+
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-number-pill {
+            width: 44px;
+            height: 44px;
+            background: var(--bg-color);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-indigo);
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 24px;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+        }
+
+        .flow-step:hover .step-number-pill {
+            border-color: var(--accent-indigo);
+            box-shadow: 0 0 14px rgba(99, 102, 241, 0.3);
+            transform: scale(1.05);
+            transition: all 0.2s ease;
+        }
+
+        .step-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .step-body {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.55;
+            max-width: 320px;
+        }
+
+        /* Tech Stack Strip */
+        .tech-section {
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .tech-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--card-border);
+            padding: 24px;
+            background-color: #080b12;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .footer-left {
+            font-weight: 500;
+        }
+
+        .footer-right {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .footer-link:hover {
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 50px;
+                padding-top: 40px;
+            }
+
+            .hero-left {
+                align-items: center;
+            }
+
+            .hero-subheadline {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-actions {
+                justify-content: center;
+            }
+
+            .hero-screenshot-wrapper {
+                transform: none !important;
+                max-width: 600px;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+
+            .flow-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .flow-grid::after {
+                display: none;
+            }
+
+            .step-body {
+                max-width: 400px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .hero-headline {
+                font-size: 2.2rem;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .btn-hero-primary,
+            .btn-hero-secondary {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-container {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient background glow structures -->
+    <div class="ambient-glow-1"></div>
+    <div class="ambient-glow-2"></div>
+
+    <!-- Top Sticky Navigation Bar -->
+    <header>
+        <div class="nav-container">
+            <a href="/" class="logo-area">
+                <i class="fa-solid fa-shield-halved logo-icon"></i>
+                <span class="logo-text">RiskLens <span class="logo-accent">AI</span></span>
+            </a>
+            <div class="nav-right">
+                <a href="#" class="nav-link">Documentation</a>
+                <a href="/login" class="btn-login">Login</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Hero fold - two columns on desktop -->
+    <section class="hero-section">
+        <div class="hero-left">
+            <div class="hero-badge">AI-Powered Credit Risk · Built on 307K Loan Applications</div>
+            <h1 class="hero-headline">Explainable Credit Risk, Built for Loan Officers.</h1>
+            <p class="hero-subheadline">
+                RiskLens AI predicts credit default risk, explains the factors behind every score, and maintains a full
+                audit trail - so loan officers can make faster, more confident decisions.
+            </p>
+            <div class="hero-actions">
+                <a href="/login" class="btn-hero-primary">
+                    <i class="fa-solid fa-right-to-bracket"></i> Get Started
+                </a>
+                <a href="/login?demo=true" class="btn-hero-secondary">
+                    <i class="fa-solid fa-circle-play"></i> View Demo
+                </a>
+            </div>
+        </div>
+        <div class="hero-right">
+            <div class="hero-screenshot-wrapper">
+                <img src="/static/dashboard_preview.png" alt="RiskLens AI Underwriting Explorer"
+                    class="hero-screenshot">
+            </div>
+        </div>
+    </section>
+
+    <!-- Center stats bar strip -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-card">
+                <span class="stat-number">0.78</span>
+                <span class="stat-label">ROC-AUC Score</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">307K</span>
+                <span class="stat-label">Loan Applications Analyzed</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">50+</span>
+                <span class="stat-label">Engineered Risk Features</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number">&lt;4%</span>
+                <span class="stat-label">Calibration Gap</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section - three cards -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2 class="section-title">Everything a loan officer needs.</h2>
+            <p class="section-subtitle">From raw application data to an auditable, explainable decision - in seconds.
+            </p>
+        </div>
+        <div class="features-grid">
+            <!-- Card 1 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fa-solid fa-gauge-high feature-icon"></i>
+                </div>
+                <h3 class="feature-title">Instant Risk Scoring</h3>
+                <p class="feature-body">
+                    Upload or search any applicant. Our CatBoost model scores default probability in real time,
+                    calibrated against 307K historical outcomes.
+                </p>
+            </div>
+            <!-- Card 2 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fa-solid fa-magnifying-glass-chart feature-icon"></i>
+                </div>
+                <h3 class="feature-title">SHAP Explainability</h3>
+                <p class="feature-body">
+                    Every score comes with a waterfall breakdown showing exactly which factors drove the result - in
+                    plain English, not model jargon. Adjust variables live with what-if sliders.
+                </p>
+            </div>
+            <!-- Card 3 -->
+            <div class="feature-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fa-solid fa-clock-rotate-left feature-icon"></i>
+                </div>
+                <h3 class="feature-title">Audit Trail + AI Narration</h3>
+                <p class="feature-body">
+                    Every prediction, officer decision, and AI-generated explanation is logged automatically. Full case
+                    history per applicant, searchable by officer or date.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works section -->
+    <section class="how-section">
+        <div class="how-container">
+            <div class="section-header">
+                <h2 class="section-title">From application to decision in three steps.</h2>
+            </div>
+            <div class="flow-grid">
+                <!-- Step 1 -->
+                <div class="flow-step">
+                    <div class="step-number-pill">01</div>
+                    <h3 class="step-title">Search or Select Applicant</h3>
+                    <p class="step-body">
+                        Find any applicant by ID or name. Their full profile loads instantly from the application
+                        database.
+                    </p>
+                </div>
+                <!-- Step 2 -->
+                <div class="flow-step">
+                    <div class="step-number-pill">02</div>
+                    <h3 class="step-title">Review AI Risk Assessment</h3>
+                    <p class="step-body">
+                        See the predicted default probability, SHAP factor breakdown, and an AI-generated plain-English
+                        explanation of key risk drivers.
+                    </p>
+                </div>
+                <!-- Step 3 -->
+                <div class="flow-step">
+                    <div class="step-number-pill">03</div>
+                    <h3 class="step-title">Log Your Decision</h3>
+                    <p class="step-body">
+                        Approve, decline, or escalate - with optional notes. Every decision is timestamped and tied to
+                        your officer account for full auditability.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack Strip -->
+    <section class="tech-section">
+        <span class="tech-text">Built with CatBoost · FastAPI · React · SHAP · OpenAI · SQLite</span>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-left">
+                RiskLens AI - by Palak Goyal
+            </div>
+            <div class="footer-right">
+                <a href="https://github.com/PalakGoyal6/RiskLens-AI" class="footer-link" target="_blank"
+                    rel="noopener noreferrer">
+                    <i class="fa-brands fa-github"></i> GitHub Repo
+                </a>
+                <a href="https://www.linkedin.com/in/palakgoyal2006/" class="footer-link" target="_blank"
+                    rel="noopener noreferrer">
+                    <i class="fa-brands fa-linkedin"></i> LinkedIn
+                </a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

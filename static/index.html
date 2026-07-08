@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskLens AI - Underwriting & Model Explainability Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/index.css">
+    <!-- D3.js for premium SVG visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-shield-halved logo-icon"></i>
+                <span class="logo-text">RiskLens <span class="logo-accent">AI</span></span>
+            </div>
+            <div class="sidebar-user" id="sidebar-user" style="display:none">
+                <div class="user-avatar" id="sidebar-user-avatar">O</div>
+                <div class="user-info">
+                    <span class="user-name" id="sidebar-user-name">Officer Name</span>
+                    <span class="user-role" id="sidebar-user-role">Loan Officer</span>
+                </div>
+                <button class="btn-logout" onclick="logoutUser()" title="Logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" id="tab-btn-home" onclick="switchTab('home')">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard Home</span>
+                </button>
+                <button class="nav-item" id="tab-btn-cohort" onclick="switchTab('cohort')">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Cohort Explorer</span>
+                </button>
+                <button class="nav-item" id="tab-btn-scoring" onclick="switchTab('scoring')">
+                    <i class="fa-solid fa-address-card"></i>
+                    <span>Credit Scoring Form</span>
+                </button>
+                <button class="nav-item" id="tab-btn-global" onclick="switchTab('global')">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>Global Explainability</span>
+                </button>
+                <button class="nav-item" id="tab-btn-performance" onclick="switchTab('performance')">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Model Performance</span>
+                </button>
+                <button class="nav-item" id="tab-btn-glossary" onclick="toggleGlossary()">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>Factor Glossary</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="model-badge">
+                    <span class="badge-label">Model:</span>
+                    <span class="badge-val">CatBoost (Tuned)</span>
+                </div>
+                <div class="theme-toggle-container" onclick="toggleTheme()" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--card-border);">
+                    <span class="badge-label" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase;">Theme</span>
+                    <div class="theme-switch" style="display: flex; align-items: center; gap: 8px; color: var(--text-secondary);">
+                        <i class="fa-solid fa-moon theme-icon-dark" style="color: var(--accent-blue);"></i>
+                        <i class="fa-solid fa-sun theme-icon-light" style="display: none; color: var(--accent-gold);"></i>
+                        <span id="theme-text" style="font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Dark</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-title-area">
+                    <h1 id="page-title">Cohort Explorer</h1>
+                    <p class="header-subtitle" id="page-subtitle">Analyze applicant risk metrics, query loan records,
+                        and inspect classifications.</p>
+                </div>
+                <div class="header-actions">
+                    <div class="lookup-wrapper">
+                        <div class="lookup-input-container">
+                            <i class="fa-solid fa-magnifying-glass lookup-icon"></i>
+                            <input type="text" id="global-lookup-search" class="lookup-input"
+                                placeholder="Look up applicant ID..." oninput="handleGlobalLookup(this.value)">
+                        </div>
+                        <div class="lookup-results-dropdown" id="global-lookup-results"></div>
+                    </div>
+                </div>
+                <!-- Mini Stats Bar -->
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Model ROC-AUC</span>
+                        <span class="stat-value text-glow-blue">0.781</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Current Threshold</span>
+                        <span class="stat-value text-glow-purple" id="header-threshold-val">0.150</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Active Database Pool</span>
+                        <span class="stat-value" id="header-total-cohort">61,503</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Home Tab -->
+            <section id="tab-home" class="tab-content active">
+                <div class="grid-layout">
+                    <!-- Welcome / Quick Actions Banner -->
+                    <div class="span-12 welcome-banner glass-card"
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 24px; margin-bottom: 8px;">
+                        <div class="welcome-text">
+                            <h2
+                                style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; margin-bottom: 6px;">
+                                Welcome back, <span id="home-officer-name"
+                                    style="color: var(--accent-indigo);">Officer</span></h2>
+                            <p style="color: var(--text-secondary); font-size: 0.80rem;">Here is a live summary of your
+                                credit underwriting pipeline and recent underwriting outcomes.</p>
+                        </div>
+                        <div class="welcome-actions" style="display: flex; gap: 12px;">
+                            <button class="btn-primary-glow" onclick="switchTab('cohort')"
+                                style="background: var(--accent-indigo); color: #fff; border: none; padding: 7.5px 15px; border-radius: 8px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;">
+                                <i class="fa-solid fa-users"></i> Cohort Explorer
+                            </button>
+                            <button class="btn-primary-glow" onclick="switchTab('scoring')"
+                                style="background: rgba(255,255,255,0.06); color: var(--text-primary); border: 1px solid var(--card-border); padding: 7.5px 15px; border-radius: 8px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s;">
+                                <i class="fa-solid fa-address-card"></i> New Scoring Form
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="span-12 cohort-summary-cards">
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-clock-rotate-left card-icon text-glow-purple"
+                                style="color: var(--accent-indigo);"></i>
+                            <div>
+                                <span class="m-label">Pending Reviews</span>
+                                <span class="m-value" id="home-pending-count">0</span>
+                                <span class="m-sub">Sample Cohort</span>
+                            </div>
+                        </div>
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-user-check card-icon text-glow-blue"
+                                style="color: var(--accent-blue);"></i>
+                            <div>
+                                <span class="m-label">Approved Decisions</span>
+                                <span class="m-value" id="home-approved-count">0</span>
+                                <span class="m-sub">Database Overrides</span>
+                            </div>
+                        </div>
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-user-slash card-icon text-glow-red"
+                                style="color: var(--accent-crimson);"></i>
+                            <div>
+                                <span class="m-label">Declined Decisions</span>
+                                <span class="m-value" id="home-declined-count">0</span>
+                                <span class="m-sub">Database Overrides</span>
+                            </div>
+                        </div>
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-gauge-high card-icon text-glow-orange"
+                                style="color: var(--accent-gold);"></i>
+                            <div>
+                                <span class="m-label">Avg Pending Risk</span>
+                                <span class="m-value" id="home-avg-risk">0.0%</span>
+                                <span class="m-sub">Mean probability</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid Layout for Lists -->
+                    <div class="span-6 card glass-card flex-col" style="min-height: 400px;">
+                        <div class="card-header"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Pending Review Cases</h3>
+                            <span class="header-badge" id="pending-badge-count"
+                                style="background: rgba(99, 102, 241, 0.15); color: var(--accent-indigo); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">0
+                                Cases</span>
+                        </div>
+                        <div class="card-body list-container" id="home-pending-list"
+                            style="padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;">
+                            <!-- Populated dynamically -->
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading
+                                pending cases...</div>
+                        </div>
+                    </div>
+
+                    <div class="span-6 card glass-card flex-col" style="min-height: 400px;">
+                        <div class="card-header"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Recent Underwriting Activity</h3>
+                            <span class="header-badge" id="recent-badge-count"
+                                style="background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">Last
+                                5 Decisions</span>
+                        </div>
+                        <div class="card-body list-container" id="home-recent-list"
+                            style="padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto;">
+                            <!-- Populated dynamically -->
+                            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading
+                                activity feed...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cohort Explorer Tab -->
+            <section id="tab-cohort" class="tab-content">
+                <div class="grid-layout">
+                    <!-- Cohort Summary Stats -->
+                    <div class="span-12 cohort-summary-cards">
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-user-check card-icon text-glow-blue"></i>
+                            <div>
+                                <span class="m-label">Approved Loans</span>
+                                <span class="m-value" id="cohort-approved-count">843</span>
+                                <span class="m-sub">84.3% Approval Rate</span>
+                            </div>
+                        </div>
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-user-slash card-icon text-glow-red"></i>
+                            <div>
+                                <span class="m-label">Rejected Loans</span>
+                                <span class="m-value" id="cohort-rejected-count">157</span>
+                                <span class="m-sub">15.7% Decline Rate</span>
+                            </div>
+                        </div>
+                        <div class="mini-stat-card glass-card">
+                            <i class="fa-solid fa-circle-exclamation card-icon text-glow-orange"></i>
+                            <div>
+                                <span class="m-label">Actual Defaults</span>
+                                <span class="m-value" id="cohort-default-count">80</span>
+                                <span class="m-sub">8.0% Defaulter Ratio</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search, Filters, and Table Card -->
+                    <div class="card glass-card span-12 flex-col">
+                        <div class="card-header table-controls-header">
+                            <div class="filter-group-wrapper">
+                                <div class="filter-pills">
+                                    <button class="pill-btn active" onclick="setCohortFilter('all')">All</button>
+                                    <button class="pill-btn" onclick="setCohortFilter('approved')">Approved</button>
+                                    <button class="pill-btn" onclick="setCohortFilter('rejected')">Rejected</button>
+                                    <button class="pill-btn" onclick="setCohortFilter('defaults')">Actual
+                                        Defaults</button>
+                                    <button class="pill-btn" onclick="setCohortFilter('high-risk')">High Risk
+                                        (>=15%)</button>
+                                </div>
+                            </div>
+                            <div class="search-sort-group">
+                                <div class="search-input-wrapper">
+                                    <i class="fa-solid fa-magnifying-glass table-search-icon"></i>
+                                    <input type="text" id="cohort-search" placeholder="Search applicant ID..."
+                                        oninput="filterCohortTable()">
+                                </div>
+                                <div class="select-wrapper table-sort-select">
+                                    <select id="cohort-sort" onchange="filterCohortTable()">
+                                        <option value="prob-desc">Risk: High to Low</option>
+                                        <option value="prob-asc">Risk: Low to High</option>
+                                        <option value="id-asc">Applicant ID</option>
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body table-container">
+                            <div class="loading-spinner" id="cohort-spinner">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading applicant list...
+                            </div>
+                            <table class="applicant-table" id="cohort-table" style="display:none">
+                                <thead>
+                                    <tr>
+                                        <th>Applicant ID</th>
+                                        <th>Risk Score</th>
+                                        <th>Risk Classification</th>
+                                        <th>Decision Status</th>
+                                        <th>Actual Class</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cohort-table-body">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Credit Scoring Form Tab (Scoring & Local explanation) -->
+            <section id="tab-scoring" class="tab-content">
+                <div class="grid-layout">
+                    <!-- Left: Profile Presets and Input Form -->
+                    <div class="card glass-card span-5 flex-col">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 8px;">
+                                    <h2 style="margin: 0;">Applicant Profile & Credit Scoring Form</h2>
+                                    <span id="active-applicant-name"
+                                        style="font-size: 0.78rem; font-weight: 600; background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); padding: 4px 10px; border-radius: 100px; display: none; filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.2));"></span>
+                                </div>
+                                <p class="card-description" style="margin-top: 6px;">Modify variables to score a new
+                                    credit application, or select a preset profile to load details.</p>
+                            </div>
+                        </div>
+
+                        <!-- Profile Preset Selector -->
+                        <div class="preset-selector-section">
+                            <label for="form-preset-select">Load Applicant Profile:</label>
+                            <div class="preset-row">
+                                <div class="select-wrapper">
+                                    <select id="form-preset-select" onchange="loadFormPreset(this.value)">
+                                        <!-- Loaded dynamically -->
+                                    </select>
+                                    <i class="fa-solid fa-chevron-down select-arrow"></i>
+                                </div>
+                                <button class="btn-primary" onclick="loadRandomFormPreset()">
+                                    <i class="fa-solid fa-shuffle"></i> Random
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Categorized Form Fields -->
+                        <form id="scoring-form" class="scoring-form-body"
+                            onsubmit="event.preventDefault(); analyzeCustomApplicant();">
+                            <div class="form-tabs-control">
+                                <button type="button" class="form-tab-btn active"
+                                    onclick="switchFormTab('scores')">Scores</button>
+                                <button type="button" class="form-tab-btn"
+                                    onclick="switchFormTab('financials')">Financials</button>
+                                <button type="button" class="form-tab-btn" onclick="switchFormTab('employment')">Work &
+                                    Profile</button>
+                            </div>
+
+                            <!-- Tab Content: Credit Scores -->
+                            <div class="form-tab-panel active" id="form-panel-scores">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="input-EXT_SOURCE_2">Credit Bureau Score A (0-1) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('EXT_SOURCE_2'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" max="1" id="input-EXT_SOURCE_2"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-EXT_SOURCE_3">Credit Bureau Score B (0-1) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('EXT_SOURCE_3'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" max="1" id="input-EXT_SOURCE_3"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-EXT_SOURCE_1">Credit Bureau Score C (0-1) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('EXT_SOURCE_1'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" max="1" id="input-EXT_SOURCE_1"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-BUREAU_DEBT_CREDIT_RATIO">Debt-to-Credit Ratio (0-1) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('BUREAU_DEBT_CREDIT_RATIO'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" max="10"
+                                            id="input-BUREAU_DEBT_CREDIT_RATIO" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab Content: Financials -->
+                            <div class="form-tab-panel" id="form-panel-financials">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="input-AMT_GOODS_PRICE">Purchase Price (₹) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('AMT_GOODS_PRICE'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" id="input-AMT_GOODS_PRICE" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-AMT_CREDIT">Total Credit Amount (₹) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('AMT_CREDIT'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" id="input-AMT_CREDIT" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-AMT_ANNUITY">Annual Loan Annuity (₹) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('AMT_ANNUITY'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" id="input-AMT_ANNUITY" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-CREDIT_INCOME_RATIO">Credit-to-Income Ratio <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('CREDIT_INCOME_RATIO'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" id="input-CREDIT_INCOME_RATIO" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-CREDIT_TERM">Credit Term Duration (months) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('CREDIT_TERM'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="1" id="input-CREDIT_TERM" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab Content: Employment & Demographics -->
+                            <div class="form-tab-panel" id="form-panel-employment">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="input-DAYS_EMPLOYED">Employment Duration (days) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('DAYS_EMPLOYED'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" id="input-DAYS_EMPLOYED" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-LATE_PAYMENT_RATIO">Late Payment History Ratio (0-1) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('LATE_PAYMENT_RATIO'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" max="1" id="input-LATE_PAYMENT_RATIO"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-POS_COUNT">No. of Previous POS Loans <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('POS_COUNT'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" id="input-POS_COUNT" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-RECENT_LATE_RATIO">Recent Late Payment Rate (0-1) <i
+                                                class="fa-solid fa-circle-info help-icon"
+                                                onmouseover="showTooltip(event, getDescription('RECENT_LATE_RATIO'))"
+                                                onmouseout="hideTooltip()"></i></label>
+                                        <input type="number" step="any" min="0" max="1" id="input-RECENT_LATE_RATIO"
+                                            required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-CODE_GENDER_M">Gender: Male (0 or 1)</label>
+                                        <input type="number" step="any" min="0" max="1" id="input-CODE_GENDER_M"
+                                            required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary form-submit-btn">
+                                <i class="fa-solid fa-calculator"></i> Run Credit Risk Assessment
+                            </button>
+                        </form>
+
+                        <!-- Underwriting Decisions panel (Human-in-the-Loop) -->
+                        <div class="underwriting-panel" id="underwriting-panel">
+                            <h3
+                                style="font-size: 0.9rem; font-weight:600; color:var(--text-primary); margin-bottom: 12px;">
+                                Underwriting Decision Override</h3>
+                            <form id="underwriting-form" class="underwriting-form"
+                                onsubmit="event.preventDefault(); submitUnderwritingDecision();">
+                                <div class="underwriting-select-group">
+                                    <label>Action:</label>
+                                    <div class="decision-radio-group">
+                                        <input type="radio" name="underwriting-decision" id="decision-approve"
+                                            value="approved" class="decision-radio-input" checked>
+                                        <label for="decision-approve"
+                                            class="decision-radio-label approve">Approve</label>
+
+                                        <input type="radio" name="underwriting-decision" id="decision-decline"
+                                            value="declined" class="decision-radio-input">
+                                        <label for="decision-decline"
+                                            class="decision-radio-label decline">Decline</label>
+
+                                        <input type="radio" name="underwriting-decision" id="decision-escalate"
+                                            value="escalated" class="decision-radio-input">
+                                        <label for="decision-escalate"
+                                            class="decision-radio-label escalate">Escalate</label>
+                                    </div>
+                                </div>
+                                <textarea id="underwriting-notes" class="underwriting-notes"
+                                    placeholder="Add underwriting notes / rationale for override or approval..."></textarea>
+                                <button type="submit" class="btn-primary btn-decision-submit">
+                                    <i class="fa-solid fa-file-signature"></i> Submit Decision Override
+                                </button>
+                            </form>
+
+                            <!-- Decision history timeline for this applicant -->
+                            <div class="timeline-container">
+                                <div class="timeline-title">Evaluation Audit Trail</div>
+                                <div class="timeline-list" id="timeline-list">
+                                    <!-- Populated dynamically -->
+                                    <div class="timeline-empty">No previous evaluations logged.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Risk Score Gauge and Waterfall -->
+                    <div class="span-7 flex-col gap-24">
+                        <!-- Risk Score Gauge Card -->
+                        <div class="card glass-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h2>Credit Risk Assessment Gauge</h2>
+                                    <p class="card-description">Real-time prediction and score mapping showing credit
+                                        default probability with risk categorization zones.</p>
+                                </div>
+                            </div>
+                            <div class="card-body gauge-display-layout">
+                                <div class="premium-gauge-wrapper">
+                                    <svg id="scoring-premium-gauge" width="220" height="140"
+                                        viewBox="0 0 200 120"></svg>
+                                    <div class="premium-gauge-labels">
+                                        <span class="p-gauge-risk" id="scoring-risk-score">0.0%</span>
+                                        <span class="p-gauge-rating" id="scoring-risk-rating">APPROVED</span>
+                                    </div>
+                                </div>
+                                <div class="assessment-briefing">
+                                    <div class="brief-row">
+                                        <span class="brief-label">Credit Decision:</span>
+                                        <span class="brief-value" id="scoring-decision-badge">Approved</span>
+                                    </div>
+                                    <div class="brief-row">
+                                        <span class="brief-label">Baseline Default Rate:</span>
+                                        <span class="brief-value">5.6%</span>
+                                    </div>
+                                    <div class="brief-row-block">
+                                        <p class="brief-text" id="scoring-decision-text">Applicant exhibits high
+                                            stability scores, low relative debt metrics, and favorable bureau signals.
+                                            Recommend approval.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SHAP Waterfall Card -->
+                        <div class="card glass-card">
+                            <div class="card-header">
+                                <div class="card-title-group">
+                                    <h2>Individual Contribution Waterfall (SHAP)</h2>
+                                    <p class="card-description">Explains exactly how features shift default probability.
+                                        Values show percentage point risk contributions.</p>
+                                </div>
+                            </div>
+                            <div class="card-body chart-container" id="waterfall-container">
+                                <div class="loading-spinner" id="waterfall-spinner">
+                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Rendering waterfall explanation...
+                                </div>
+                                <svg id="waterfall-chart" width="100%" height="450"></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Global Explainability Tab -->
+            <section id="tab-global" class="tab-content">
+                <div class="grid-layout">
+                    <!-- Left: Global Feature Importance -->
+                    <div class="card glass-card span-5">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h2>Global Feature Importance</h2>
+                                <p class="card-description">Mean absolute SHAP value representing the average magnitude
+                                    of a feature's effect on loan default predictions.</p>
+                            </div>
+                        </div>
+                        <div class="card-body chart-container" id="global-bar-chart-container">
+                            <div class="loading-spinner" id="global-bar-spinner">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Loading feature importance...
+                            </div>
+                            <svg id="global-bar-chart" width="100%" height="480"></svg>
+                        </div>
+                    </div>
+
+                    <!-- Right: Beeswarm Explanation -->
+                    <div class="card glass-card span-7">
+                        <div class="card-header beeswarm-card-header">
+                            <div class="card-title-group">
+                                <h2 id="beeswarm-title">SHAP Beeswarm Plot</h2>
+                                <p class="card-description" id="beeswarm-description">Displays the distribution of
+                                    impact that each of the top 15 features has on all predictions. Points represent
+                                    individual applicants.</p>
+                            </div>
+                            <div class="card-header-controls">
+                                <div class="segmented-control">
+                                    <button class="control-btn active" id="btn-chart-beeswarm"
+                                        onclick="setGlobalChartMode('beeswarm')">Detailed Beeswarm</button>
+                                    <button class="control-btn" id="btn-chart-summary"
+                                        onclick="setGlobalChartMode('summary')">Risk Impact Summary</button>
+                                </div>
+                                <div class="legend-container" id="beeswarm-legend">
+                                    <span class="legend-label">Feature Value:</span>
+                                    <div class="gradient-bar"></div>
+                                    <div class="legend-labels">
+                                        <span>Low (Safe)</span>
+                                        <span>High (Risk)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body chart-container" id="beeswarm-container">
+                            <div class="loading-spinner" id="beeswarm-spinner">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Running force layout simulations...
+                            </div>
+                            <svg id="beeswarm-plot" width="100%" height="560"></svg>
+                            <svg id="impact-summary-plot" width="100%" height="560" style="display:none"></svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Model Performance Tab -->
+            <section id="tab-performance" class="tab-content">
+                <div class="grid-layout">
+                    <!-- Metrics Summary Cards & Threshold Slider -->
+                    <div class="card glass-card span-12 grid-performance-header">
+                        <div class="perf-slider-container">
+                            <div class="perf-slider-labels">
+                                <h3>Interactive Decision Threshold Simulator</h3>
+                                <span class="threshold-pill" id="slider-threshold-val">0.150</span>
+                            </div>
+                            <input type="range" id="perf-threshold-slider" min="0.05" max="0.50" step="0.01"
+                                value="0.15" oninput="updatePerformanceMetrics(this.value)">
+                            <p class="slider-help">Adjust the decision cutoff to optimize the balance between approval
+                                rate (approval count) and default losses.</p>
+                        </div>
+                        <div class="performance-metrics-cards">
+                            <div class="metric-block">
+                                <span class="m-lbl">Model Accuracy</span>
+                                <span class="m-val" id="perf-accuracy">86.5%</span>
+                            </div>
+                            <div class="metric-block">
+                                <span class="m-lbl">F1-Score</span>
+                                <span class="m-val text-glow-purple" id="perf-f1">33.4%</span>
+                            </div>
+                            <div class="metric-block font-bold">
+                                <span class="m-lbl">Precision</span>
+                                <span class="m-val text-glow-blue" id="perf-precision">26.6%</span>
+                                <span class="m-note">(% of approvals that pay)</span>
+                            </div>
+                            <div class="metric-block">
+                                <span class="m-lbl">Recall (Sensitivity)</span>
+                                <span class="m-val text-glow-orange" id="perf-recall">45.0%</span>
+                                <span class="m-note">(% of defaults caught)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Left Column: ROC Curve -->
+                    <div class="card glass-card span-6">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h2>ROC Curve (Receiver Operating Characteristic)</h2>
+                                <p class="card-description">Plots True Positive Rate against False Positive Rate. The
+                                    glowing purple circle tracks the active threshold setting.</p>
+                            </div>
+                        </div>
+                        <div class="card-body chart-container" id="roc-chart-container">
+                            <svg id="roc-chart" width="100%" height="380"></svg>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Confusion Matrix -->
+                    <div class="card glass-card span-6">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h2>Confusion Classification Matrix</h2>
+                                <p class="card-description">Displays lending outcomes at current threshold setting.
+                                    Shows correct decisions vs credit risk errors.</p>
+                            </div>
+                        </div>
+                        <div class="card-body matrix-body-wrapper">
+                            <div class="confusion-matrix-grid">
+                                <!-- True Negative -->
+                                <div class="matrix-cell tn" id="cell-tn">
+                                    <span class="cell-count" id="count-tn">0</span>
+                                    <span class="cell-label">Approved & Paid (True Negatives)</span>
+                                    <span class="cell-percentage" id="pct-tn">0%</span>
+                                </div>
+                                <!-- False Positive -->
+                                <div class="matrix-cell fp" id="cell-fp">
+                                    <span class="cell-count" id="count-fp">0</span>
+                                    <span class="cell-label">Rejected & Would Pay (False Positives)</span>
+                                    <span class="cell-percentage" id="pct-fp">0%</span>
+                                </div>
+                                <!-- False Negative -->
+                                <div class="matrix-cell fn" id="cell-fn">
+                                    <span class="cell-count text-glow-red" id="count-fn">0</span>
+                                    <span class="cell-label">Approved but Defaulted (False Negatives)</span>
+                                    <span class="cell-percentage" id="pct-fn">0%</span>
+                                </div>
+                                <!-- True Positive -->
+                                <div class="matrix-cell tp" id="cell-tp">
+                                    <span class="cell-count text-glow-green" id="count-tp">0</span>
+                                    <span class="cell-label">Rejected & Defaulter (True Positives)</span>
+                                    <span class="cell-percentage" id="pct-tp">0%</span>
+                                </div>
+                            </div>
+                            <div class="matrix-legend">
+                                <span><span class="legend-color safe"></span> Correct Outcome</span>
+                                <span><span class="legend-color danger"></span> Lending Error</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model Calibration Reliability Diagram -->
+                    <div class="card glass-card span-12 flex-col">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h2>Model Probability Calibration Curve (Reliability Diagram)</h2>
+                                <p class="card-description">A well-calibrated model's curve follows the diagonal dashed
+                                    reference line. It measures how closely the predicted probabilities correspond to
+                                    real default frequencies.</p>
+                            </div>
+                        </div>
+                        <div class="card-body chart-container" id="calibration-chart-container"
+                            style="display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 18px 24px;">
+                            <div style="flex: 1; min-width: 450px;">
+                                <svg id="calibration-chart" width="100%" height="380"></svg>
+                            </div>
+                            <div class="calibration-stats-panel"
+                                style="width: 320px; background: rgba(15, 23, 42, 0.4); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px;">
+                                <h3
+                                    style="font-size: 0.9rem; font-weight:600; color:var(--text-primary); margin-bottom: 12px;">
+                                    Calibration Diagnostics</h3>
+                                <div class="brief-row"
+                                    style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:0.8rem;">
+                                    <span style="color:var(--text-secondary);">Brier Score (Before):</span>
+                                    <span style="font-weight:600; color:var(--accent-crimson);"
+                                        id="calib-brier-before">0.0000</span>
+                                </div>
+                                <div class="brief-row"
+                                    style="display:flex; justify-content:space-between; margin-bottom:12px; font-size:0.8rem;">
+                                    <span style="color:var(--text-secondary);">Brier Score (After):</span>
+                                    <span style="font-weight:600; color:var(--accent-teal);"
+                                        id="calib-brier-after">0.0000</span>
+                                </div>
+                                <div
+                                    style="margin-top: 16px; font-size: 0.72rem; color: var(--text-secondary); line-height: 1.45; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
+                                    <i class="fa-solid fa-circle-info"
+                                        style="color: var(--accent-indigo); margin-right: 6px;"></i>
+                                    The Brier score measures the mean squared error between predictions and targets.
+                                    Lower scores indicate better prediction accuracy and calibration.
+                                    <br><br>
+                                    <strong>Status:</strong> The baseline model shows very strong native calibration
+                                    (average gap &lt; 4%), indicating that predicted probabilities can be directly
+                                    interpreted as risk rates. <br><br>
+                                    <strong>Meaning:</strong> When this model predicts a 20% default risk,
+                                    approximately 20% of such applicants actually default — the risk percentages shown
+                                    on applicant profiles are reliable.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Human-in-the-Loop Override Analytics Card -->
+                    <div class="card glass-card span-12 flex-col">
+                        <div class="card-header">
+                            <div class="card-title-group">
+                                <h2>Human-in-the-Loop Override Analytics</h2>
+                                <p class="card-description">Comparative analytics showing AI recommendations vs human
+                                    underwriting decisions and manual override rates.</p>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 18px 24px;">
+                            <div class="human-metrics-grid">
+                                <div class="human-metric-tile">
+                                    <div class="human-metric-title">Total Decisions Recorded</div>
+                                    <div class="human-metric-val" id="override-stat-total">0</div>
+                                </div>
+                                <div class="human-metric-tile">
+                                    <div class="human-metric-title">Manual Override Rate</div>
+                                    <div class="human-metric-val glow-crimson" id="override-stat-rate">0.0%</div>
+                                </div>
+                                <div class="human-metric-tile">
+                                    <div class="human-metric-title">Overridden Cases Count</div>
+                                    <div class="human-metric-val glow-gold" id="override-stat-count">0</div>
+                                </div>
+                            </div>
+                            <div
+                                style="margin-top: 16px; font-size: 0.76rem; color: var(--text-secondary); line-height: 1.4;">
+                                <i class="fa-solid fa-circle-info"
+                                    style="color: var(--accent-indigo); margin-right: 6px;"></i>
+                                An override is recorded when the model output suggests one action (e.g. Approved if
+                                probability is below threshold 0.15), but the loan officer overrides it manually with a
+                                different decision (e.g. Decline).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Tooltip Element -->
+    <div id="chart-tooltip" class="tooltip"></div>
+
+    <!-- Glossary Drawer -->
+    <div id="glossary-drawer" class="glossary-drawer">
+        <div class="drawer-header">
+            <h2><i class="fa-solid fa-book-open"></i> Factor Glossary</h2>
+            <button class="btn-close-drawer" onclick="toggleGlossary()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="drawer-subtitle">One-sentence plain English definitions of every factor used in the model.</p>
+        <div class="drawer-search">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="glossary-search" placeholder="Search factors..."
+                oninput="filterGlossary(this.value)">
+        </div>
+        <div class="drawer-body" id="glossary-list">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+
+    <!-- Login Screen Modal Overlay -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>RiskLens <span style="color: var(--accent-blue)">AI</span></span>
+            </div>
+            <div class="login-subtitle">Underwriter Portal Authentication</div>
+
+            <div class="login-error" id="login-error-msg">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="login-error-text">Invalid credentials.</span>
+            </div>
+
+            <form class="login-form" onsubmit="event.preventDefault(); submitLogin();">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" required placeholder="e.g. officer1" autocomplete="username">
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••"
+                        autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-primary"
+                    style="width: 100%; justify-content: center; margin-top: 24px; padding: 12px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In to Portal
+                </button>
+            </form>
+            <div style="margin-top: 24px; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+                Seeded Loan Officers:<br>
+                <code>officer1</code> / <code>password123</code> (Loan Officer)<br>
+                <code>admin</code> / <code>admin123</code> (Administrator)
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating AI Underwriting Assistant Chatbot -->
+    <div id="ai-chat-container" class="ai-chat-container">
+        <button id="ai-chat-bubble" class="ai-chat-bubble" title="Ask AI Assistant">
+            <i class="fa-solid fa-robot"></i>
+            <span class="chat-pulse" id="chat-pulse"></span>
+        </button>
+        <div id="ai-chat-window" class="ai-chat-window hidden">
+            <div id="ai-chat-header" class="ai-chat-header">
+                <div class="chat-header-title">
+                    <i class="fa-solid fa-robot" style="color:var(--accent-teal)"></i>
+                    <span style="font-weight:600">RiskLens AI Assistant</span>
+                </div>
+                <button id="ai-chat-close" class="ai-chat-close" title="Close Chat">&times;</button>
+            </div>
+            <div id="ai-chat-messages" class="ai-chat-messages">
+                <div class="chat-message system">
+                    Welcome! I'm your AI Underwriting Assistant. Select an applicant or ask me questions about risk
+                    factors and loan metrics.
+                </div>
+            </div>
+            <div id="ai-chat-suggestions" class="ai-chat-suggestions">
+                <button class="chat-suggest-btn">Explain active risk factors</button>
+                <button class="chat-suggest-btn">How can we mitigate default risk?</button>
+            </div>
+            <form id="ai-chat-form" class="ai-chat-form">
+                <input type="text" id="ai-chat-input" placeholder="Type a message..." required autocomplete="off" />
+                <button type="submit" id="ai-chat-send" title="Send message">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Helper -->
+    <script>
+        function initTheme() {
+            const savedTheme = localStorage.getItem("theme") || "dark";
+            const body = document.body;
+            const darkIcon = document.querySelector(".theme-icon-dark");
+            const lightIcon = document.querySelector(".theme-icon-light");
+            const themeText = document.getElementById("theme-text");
+            
+            if (savedTheme === "light") {
+                body.classList.remove("dark-theme");
+                body.classList.add("light-theme");
+                if (darkIcon) darkIcon.style.display = "none";
+                if (lightIcon) lightIcon.style.display = "inline-block";
+                if (themeText) themeText.textContent = "Light";
+            } else {
+                body.classList.remove("light-theme");
+                body.classList.add("dark-theme");
+                if (darkIcon) darkIcon.style.display = "inline-block";
+                if (lightIcon) lightIcon.style.display = "none";
+                if (themeText) themeText.textContent = "Dark";
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const darkIcon = document.querySelector(".theme-icon-dark");
+            const lightIcon = document.querySelector(".theme-icon-light");
+            const themeText = document.getElementById("theme-text");
+            
+            if (body.classList.contains("dark-theme")) {
+                body.classList.remove("dark-theme");
+                body.classList.add("light-theme");
+                localStorage.setItem("theme", "light");
+                if (darkIcon) darkIcon.style.display = "none";
+                if (lightIcon) lightIcon.style.display = "inline-block";
+                if (themeText) themeText.textContent = "Light";
+            } else {
+                body.classList.remove("light-theme");
+                body.classList.add("dark-theme");
+                localStorage.setItem("theme", "dark");
+                if (darkIcon) darkIcon.style.display = "inline-block";
+                if (lightIcon) lightIcon.style.display = "none";
+                if (themeText) themeText.textContent = "Dark";
+            }
+        }
+        
+        // Execute immediately to set the correct theme during page render
+        initTheme();
+    </script>
+
+    <!-- Custom JS -->
+    <script src="/static/index.js"></script>
+</body>
+
+</html>

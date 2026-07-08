@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskLens AI — Sign In / Create Account</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --sidebar-bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --card-border-glow: rgba(99, 102, 241, 0.15);
+
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+
+            --accent-blue: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-teal: #14b8a6;
+            --accent-crimson: #f43f5e;
+            --accent-gold: #eab308;
+
+            --font-primary: 'Inter', sans-serif;
+            --font-heading: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Split Screen Container */
+        .split-container {
+            display: flex;
+            width: 100vw;
+            min-height: 100vh;
+        }
+
+        /* Left Column: Branding Panel */
+        .branding-panel {
+            width: 45%;
+            background: linear-gradient(135deg, #090d16 0%, #06080e 100%);
+            border-right: 1px solid var(--card-border);
+            padding: 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Ambient background glow */
+        .branding-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -150px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--accent-indigo);
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.6));
+        }
+
+        .logo-text {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-accent {
+            color: var(--accent-indigo);
+        }
+
+        .branding-middle {
+            margin: auto 0;
+            padding: 40px 0;
+        }
+
+        .branding-headline {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-primary) 30%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .branding-subheadline {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 40px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .bullet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .bullet-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 0.98rem;
+            color: var(--text-secondary);
+        }
+
+        .bullet-check-icon {
+            color: var(--accent-teal);
+            font-size: 1.1rem;
+            filter: drop-shadow(0 0 4px rgba(20, 184, 166, 0.4));
+        }
+
+        .branding-bottom-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .stat-value {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Right Column: Form Panel */
+        .form-panel {
+            width: 55%;
+            padding: 60px 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            background-color: var(--bg-color);
+        }
+
+        .form-panel::after {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.04) 0%, rgba(56, 189, 248, 0) 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .form-area-wrapper {
+            max-width: 460px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Mobile Logo (hidden on desktop) */
+        .mobile-logo {
+            display: none;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        /* Form Tabs Selector */
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--card-border);
+            margin-bottom: 32px;
+            gap: 24px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text-secondary);
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding-bottom: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-indigo);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--accent-indigo);
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.6);
+        }
+
+        /* Alert Banners */
+        .alert-banner {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            line-height: 1.4;
+        }
+
+        .alert-banner.error {
+            background-color: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+            color: var(--accent-crimson);
+            display: flex;
+        }
+
+        .alert-banner.success {
+            background-color: rgba(20, 184, 166, 0.1);
+            border: 1px solid rgba(20, 184, 166, 0.2);
+            color: var(--accent-teal);
+            display: flex;
+        }
+
+        /* Form Controls */
+        .form-view {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-view.active {
+            display: flex;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 11px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            font-size: 0.92rem;
+            outline: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-control:focus {
+            border-color: rgba(99, 102, 241, 0.4);
+            background-color: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-control.invalid {
+            border-color: rgba(244, 63, 94, 0.4);
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.08);
+        }
+
+        .input-toggle-eye {
+            position: absolute;
+            right: 14px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+            z-index: 5;
+        }
+
+        .input-toggle-eye:hover {
+            color: var(--text-secondary);
+        }
+
+        /* Error Label */
+        .error-lbl {
+            font-size: 0.74rem;
+            color: var(--accent-crimson);
+            font-weight: 500;
+            margin-top: 2px;
+            display: none;
+        }
+
+        /* Checkbox Rows */
+        .row-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            user-select: none;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-input {
+            accent-color: var(--accent-indigo);
+            cursor: pointer;
+        }
+
+        .forgot-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: filter 0.2s ease;
+        }
+
+        .forgot-link:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Buttons */
+        .btn-submit {
+            background-color: var(--accent-indigo);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            filter: brightness(1.15);
+            box-shadow: 0 0 16px rgba(99, 102, 241, 0.5);
+            transform: translateY(-1px);
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin: 24px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .divider:not(:empty)::before {
+            margin-right: 16px;
+        }
+
+        .divider:not(:empty)::after {
+            margin-left: 16px;
+        }
+
+        /* Demo Button */
+        .btn-demo {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-demo:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Google Button */
+        .btn-google {
+            background-color: #ffffff;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: var(--font-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .btn-google:hover {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        /* Select styling */
+        select.form-control {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .branding-panel {
+                display: none;
+            }
+
+            .form-panel {
+                width: 100%;
+                padding: 40px 24px;
+            }
+
+            .mobile-logo {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="split-container">
+        <!-- Left Branding Panel (Hidden on Mobile) -->
+        <div class="branding-panel">
+            <a href="/" class="logo-area">
+                <i class="fa-solid fa-shield-halved logo-icon"></i>
+                <span class="logo-text">RiskLens <span class="logo-accent">AI</span></span>
+            </a>
+
+            <div class="branding-middle">
+                <h1 class="branding-headline">Credit Risk Intelligence for Modern Loan Officers</h1>
+
+                <div class="bullet-list">
+                    <div class="bullet-item">
+                        <i class="fa-solid fa-circle-check bullet-check-icon"></i>
+                        <span>Instant default risk scoring on any applicant</span>
+                    </div>
+                    <div class="bullet-item">
+                        <i class="fa-solid fa-circle-check bullet-check-icon"></i>
+                        <span>Plain-English AI explanations per decision</span>
+                    </div>
+                    <div class="bullet-item">
+                        <i class="fa-solid fa-circle-check bullet-check-icon"></i>
+                        <span>Full audit trail with officer-level accountability</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="branding-bottom-stats">
+                <div class="stat-item">
+                    <span class="stat-value">0.78</span>
+                    <span class="stat-label">ROC-AUC Score</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">307K</span>
+                    <span class="stat-label">Applications</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">50+</span>
+                    <span class="stat-label">Features</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">&lt;4%</span>
+                    <span class="stat-label">Calibration Gap</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="form-panel">
+            <div class="form-area-wrapper">
+                <!-- Mobile Logo (visible on mobile only) -->
+                <div class="mobile-logo">
+                    <a href="/" class="logo-area">
+                        <i class="fa-solid fa-shield-halved logo-icon" style="font-size: 2.2rem;"></i>
+                        <span class="logo-text" style="font-size: 1.7rem;">RiskLens <span
+                                class="logo-accent">AI</span></span>
+                    </a>
+                </div>
+
+                <!-- Tabs header -->
+                <div class="tabs-header">
+                    <button class="tab-btn active" id="tab-login" onclick="switchFormView('login')">Login</button>
+                    <button class="tab-btn" id="tab-signup" onclick="switchFormView('signup')">Sign Up</button>
+                </div>
+
+                <!-- Inline feedback alert banners -->
+                <div class="alert-banner" id="form-alert" style="display: none;">
+                    <i class="fa-solid fa-circle-exclamation" id="alert-icon"></i>
+                    <span id="alert-text">Error message goes here</span>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <form id="login-form" class="form-view active" onsubmit="handleLoginSubmit(event)" novalidate>
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" class="form-control" placeholder="name@bank.com" required
+                            autocomplete="username">
+                        <div class="error-lbl" id="err-login-email">Please enter a valid email address.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="login-password" class="form-control" placeholder="••••••••"
+                                required autocomplete="current-password">
+                            <i class="fa-solid fa-eye input-toggle-eye"
+                                onclick="togglePasswordVisibility('login-password', this)"></i>
+                        </div>
+                        <div class="error-lbl" id="err-login-password">Password is required.</div>
+                    </div>
+
+                    <div class="row-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="login-remember" class="checkbox-input">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" class="forgot-link" onclick="switchFormView('forgot')">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-right-to-bracket"></i> Login
+                    </button>
+
+                    <div class="divider">or</div>
+
+                    <button type="button" class="btn-google" onclick="handleGoogleLogin()">
+                        <i class="fa-brands fa-google" style="color: #ea4335;"></i> Sign in with Google
+                    </button>
+
+                    <button type="button" class="btn-demo" onclick="handleDemoLogin()">
+                        <i class="fa-solid fa-circle-play" style="color: var(--accent-blue);"></i> Continue as Demo User
+                    </button>
+                </form>
+
+                <!-- SIGN UP FORM -->
+                <form id="signup-form" class="form-view" onsubmit="handleSignupSubmit(event)" novalidate>
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" class="form-control" placeholder="Alex Carter" required
+                            autocomplete="name">
+                        <div class="error-lbl" id="err-signup-name">Full name is required.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" class="form-control" placeholder="name@bank.com" required
+                            autocomplete="email">
+                        <div class="error-lbl" id="err-signup-email">Please enter a valid email address.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="signup-password" class="form-control"
+                                placeholder="Minimum 8 characters" required autocomplete="new-password">
+                            <i class="fa-solid fa-eye input-toggle-eye"
+                                onclick="togglePasswordVisibility('signup-password', this)"></i>
+                        </div>
+                        <div class="error-lbl" id="err-signup-password">Password must be at least 8 characters.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-confirm">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="signup-confirm" class="form-control"
+                                placeholder="Re-enter password" required autocomplete="new-password">
+                            <i class="fa-solid fa-eye input-toggle-eye"
+                                onclick="togglePasswordVisibility('signup-confirm', this)"></i>
+                        </div>
+                        <div class="error-lbl" id="err-signup-confirm">Passwords do not match.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-role">Role</label>
+                        <select id="signup-role" class="form-control" required>
+                            <option value="loan_officer">Loan Officer</option>
+                            <option value="risk_analyst">Risk Analyst</option>
+                        </select>
+                    </div>
+
+                    <div class="row-options">
+                        <label class="checkbox-label" style="align-items: flex-start;">
+                            <input type="checkbox" id="signup-acknowledge" class="checkbox-input"
+                                style="margin-top: 3px;" required>
+                            <span style="line-height: 1.3;">I understand this is a portfolio demonstration
+                                application.</span>
+                        </label>
+                    </div>
+                    <div class="error-lbl" id="err-signup-acknowledge" style="margin-top: -12px;">You must acknowledge
+                        this project statement.</div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+
+                <!-- FORGOT PASSWORD FORM -->
+                <form id="forgot-form" class="form-view" onsubmit="handleForgotPasswordSubmit(event)" novalidate>
+                    <div style="margin-bottom: 8px;">
+                        <h3
+                            style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">
+                            Reset Password</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.82rem; line-height: 1.4;">Enter your
+                            registered email below and we will send you a password reset link.</p>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="forgot-email">Email Address</label>
+                        <input type="email" id="forgot-email" class="form-control" placeholder="name@bank.com" required
+                            autocomplete="email">
+                        <div class="error-lbl" id="err-forgot-email">Please enter a valid email address.</div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-paper-plane"></i> Send Reset Link
+                    </button>
+
+                    <div style="text-align: center; margin-top: 16px;">
+                        <a href="#" class="forgot-link" onclick="switchFormView('login')">
+                            <i class="fa-solid fa-arrow-left" style="font-size: 0.8rem; margin-right: 4px;"></i> Back to
+                            Login
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check for pre-existing token and redirect to dashboard
+        if (localStorage.getItem("token")) {
+            window.location.href = "/dashboard";
+        }
+
+        // Check if demo query param is set in landing page clicks
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("demo") === "true") {
+            handleDemoLogin();
+        }
+
+        // Toggle Password Show/Hide
+        function togglePasswordVisibility(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.add("fa-eye");
+                icon.classList.remove("fa-eye-slash");
+            }
+        }
+
+        // Switch active tab view
+        function switchFormView(view) {
+            // Reset alerts
+            hideAlert();
+
+            // Toggle tab button active style
+            document.querySelectorAll(".tabs-header .tab-btn").forEach(btn => btn.classList.remove("active"));
+
+            const tabsHeader = document.querySelector(".tabs-header");
+            if (view === 'login' || view === 'signup') {
+                document.getElementById(`tab-${view}`).classList.add("active");
+                tabsHeader.style.display = "flex";
+            } else {
+                tabsHeader.style.display = "none";
+            }
+
+            // Toggle form view active style
+            document.querySelectorAll(".split-container .form-view").forEach(form => form.classList.remove("active"));
+            document.getElementById(`${view}-form`).classList.add("active");
+        }
+
+        // Inline notification banner helpers
+        function showAlert(text, type = "error") {
+            const alert = document.getElementById("form-alert");
+            const alertText = document.getElementById("alert-text");
+            const alertIcon = document.getElementById("alert-icon");
+
+            alertText.textContent = text;
+            alert.className = `alert-banner ${type}`;
+
+            if (type === "error") {
+                alertIcon.className = "fa-solid fa-circle-exclamation";
+            } else {
+                alertIcon.className = "fa-solid fa-circle-check";
+            }
+            alert.style.display = "flex";
+        }
+
+        function hideAlert() {
+            document.getElementById("form-alert").style.display = "none";
+        }
+
+        // Input element validation on blur
+        document.querySelectorAll(".form-control").forEach(input => {
+            input.addEventListener("blur", () => {
+                validateField(input);
+            });
+        });
+
+        function validateField(input) {
+            const id = input.id;
+            let isValid = true;
+            let errorLabel = document.getElementById(`err-${id}`);
+
+            if (!errorLabel) return true; // skip dropdowns/others with no error label
+
+            // Validation logic based on field types
+            if (id === "login-email" || id === "signup-email" || id === "forgot-email") {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                isValid = emailRegex.test(input.value.trim());
+            } else if (id === "login-password") {
+                isValid = input.value.trim().length > 0;
+            } else if (id === "signup-name") {
+                isValid = input.value.trim().length > 0;
+            } else if (id === "signup-password") {
+                isValid = input.value.length >= 8;
+            } else if (id === "signup-confirm") {
+                const passwordVal = document.getElementById("signup-password").value;
+                isValid = (input.value === passwordVal) && input.value.length >= 8;
+            }
+
+            if (!isValid) {
+                input.classList.add("invalid");
+                errorLabel.style.display = "block";
+            } else {
+                input.classList.remove("invalid");
+                errorLabel.style.display = "none";
+            }
+            return isValid;
+        }
+
+        // Checkbox validation
+        const acknowledgeCheckbox = document.getElementById("signup-acknowledge");
+        acknowledgeCheckbox.addEventListener("change", () => {
+            const errorLabel = document.getElementById("err-signup-acknowledge");
+            if (!acknowledgeCheckbox.checked) {
+                errorLabel.style.display = "block";
+            } else {
+                errorLabel.style.display = "none";
+            }
+        });
+
+        // Submit Login Form
+        async function handleLoginSubmit(event) {
+            event.preventDefault();
+            hideAlert();
+
+            const emailInput = document.getElementById("login-email");
+            const passwordInput = document.getElementById("login-password");
+
+            const isEmailValid = validateField(emailInput);
+            const isPasswordValid = validateField(passwordInput);
+
+            if (!isEmailValid || !isPasswordValid) {
+                return;
+            }
+
+            try {
+                // Post credentials to backend auth login
+                const response = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: emailInput.value.trim(),
+                        password: passwordInput.value
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Invalid email or password. Please try again.");
+                }
+
+                const data = await response.json();
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", JSON.stringify(data.user));
+
+                // Redirect straight to dashboard home
+                window.location.href = "/dashboard";
+            } catch (e) {
+                showAlert(e.message, "error");
+            }
+        }
+
+        // Submit Sign Up Form
+        async function handleSignupSubmit(event) {
+            event.preventDefault();
+            hideAlert();
+
+            const nameInput = document.getElementById("signup-name");
+            const emailInput = document.getElementById("signup-email");
+            const passwordInput = document.getElementById("signup-password");
+            const confirmInput = document.getElementById("signup-confirm");
+            const roleSelect = document.getElementById("signup-role");
+            const acknowledgeBox = document.getElementById("signup-acknowledge");
+
+            const isNameValid = validateField(nameInput);
+            const isEmailValid = validateField(emailInput);
+            const isPasswordValid = validateField(passwordInput);
+            const isConfirmValid = validateField(confirmInput);
+
+            let isAcknowledgeValid = true;
+            const errAck = document.getElementById("err-signup-acknowledge");
+            if (!acknowledgeBox.checked) {
+                errAck.style.display = "block";
+                isAcknowledgeValid = false;
+            } else {
+                errAck.style.display = "none";
+            }
+
+            if (!isNameValid || !isEmailValid || !isPasswordValid || !isConfirmValid || !isAcknowledgeValid) {
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/auth/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        fullname: nameInput.value.trim(),
+                        email: emailInput.value.trim(),
+                        password: passwordInput.value,
+                        role: roleSelect.value
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Sign up failed. Please try again.");
+                }
+
+                const signedUpEmail = emailInput.value.trim();
+
+                // Show success, clear fields, switch to login tab
+                showAlert("Account created. You can now log in.", "success");
+
+                // Clear signup fields
+                nameInput.value = "";
+                emailInput.value = "";
+                passwordInput.value = "";
+                confirmInput.value = "";
+                acknowledgeBox.checked = false;
+
+                setTimeout(() => {
+                    switchFormView("login");
+                    // Pre-fill login email field for convenience
+                    document.getElementById("login-email").value = signedUpEmail;
+                }, 1500);
+
+            } catch (e) {
+                showAlert(e.message, "error");
+            }
+        }
+
+        // Demo User Quick Login
+        async function handleDemoLogin() {
+            hideAlert();
+            try {
+                const response = await fetch("/api/auth/demo", { method: "POST" });
+                if (!response.ok) {
+                    throw new Error("Unable to retrieve demo access token.");
+                }
+                const data = await response.json();
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", JSON.stringify(data.user));
+
+                // Pre-load state: redirect to dashboard home
+                window.location.href = "/dashboard";
+            } catch (e) {
+                showAlert("Demo login failed: " + e.message, "error");
+            }
+        }
+
+        // Google Sign-In Simulation
+        async function handleGoogleLogin() {
+            hideAlert();
+            showAlert("Connecting to Google Accounts...", "success");
+            setTimeout(async () => {
+                try {
+                    const response = await fetch("/api/auth/demo", { method: "POST" });
+                    if (!response.ok) {
+                        throw new Error("Google Authentication failed.");
+                    }
+                    const data = await response.json();
+
+                    // Modify the user display details to match a Google Account signature
+                    data.user.username = "google.user@bank.com";
+                    data.user.role = "officer";
+
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("user", JSON.stringify(data.user));
+
+                    showAlert("Authentication Successful! Redirecting...", "success");
+                    setTimeout(() => {
+                        window.location.href = "/dashboard";
+                    }, 500);
+                } catch (e) {
+                    showAlert(e.message, "error");
+                }
+            }, 1000);
+        }
+
+        // Submit Forgot Password Form
+        async function handleForgotPasswordSubmit(event) {
+            event.preventDefault();
+            hideAlert();
+
+            const emailInput = document.getElementById("forgot-email");
+            const isEmailValid = validateField(emailInput);
+
+            if (!isEmailValid) {
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/auth/forgot-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: emailInput.value.trim()
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Forgot password request failed.");
+                }
+
+                const data = await response.json();
+                showAlert(data.message, "success");
+                emailInput.value = "";
+
+                // Redirect back to login after 3.5 seconds
+                setTimeout(() => {
+                    switchFormView("login");
+                }, 3500);
+
+            } catch (e) {
+                showAlert(e.message, "error");
+            }
+        }
+    </script>
+</body>
+
+</html>

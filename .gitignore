@@ -18,3 +18,17 @@ models/y_test.pkl
 
 # Modeling metadata
 catboost_info/
+
+# Environment variables
+.env
+
+# Database files
+*.db
+credit_risk.db
+
+# Model pickles
+models/*.pkl
+
+# Logs
+error_log.txt
+*.log
