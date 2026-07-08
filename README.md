@@ -2,7 +2,7 @@
 
 [![Live Site](https://img.shields.io/badge/Live%20Demo-Render-brightgreen?style=for-the-badge)](https://risklens-ai-2e1e.onrender.com)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Gemini](https://img.shields.io/badge/Gemini%20AI-blue?style=for-the-badge&logo=google)](https://ai.google.dev/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5--mini-412991?style=for-the-badge&logo=openai)](https://openai.com/)
 [![ML Pipeline](https://img.shields.io/badge/CatBoost--1.2.10-red?style=for-the-badge)](https://catboost.ai)
 
 An end-to-end, production-grade credit underwriting and risk assessment application. RiskLens AI combines a high-performance **CatBoost** binary classifier (trained on the 307K-record Home Credit dataset) with an interactive **FastAPI** web dashboard. It features **SHAP explainability**, dynamic **what-if simulation**, and an **LLM-powered underwriting assistant** to help loan officers interpret risk factors instantly and audit decision-making.
@@ -16,7 +16,7 @@ An end-to-end, production-grade credit underwriting and risk assessment applicat
 *   **Interactive Underwriter Dashboard**: View pending loan applicants, sort by default risk, and review historical decisions.
 *   **Local SHAP Explainability**: Visualizes the exact positive/negative contributions of applicant features (e.g., Credit Bureau scores, debt-to-income, repayment delays) to their credit score.
 *   **Dynamic What-If Analysis**: Change applicant features (like decreasing loan annuity or increasing employment duration) and instantly recalculate default probability in real-time.
-*   **LLM Underwriting Assistant (Gemini 2.5 Flash)**: Generates a human-friendly, 2-sentence risk summary identifying the top 3 credit risk factors in plain English, preventing loan officers from getting lost in raw features.
+*   **LLM Underwriting Assistant (OpenAI GPT-5-mini)**: Generates a human-friendly, 2-sentence risk summary identifying the top 3 credit risk factors in plain English, preventing loan officers from getting lost in raw features.
 *   **JWT Secure Session Management**: Includes authentication, role-based access control (Admin vs. Loan Officer), and a decision audit trail saved to an SQLite database.
 
 ---
@@ -35,15 +35,15 @@ An end-to-end, production-grade credit underwriting and risk assessment applicat
            |                         |                        |
            v (Predict / SHAP)        v (Narration Prompt)     v (Audit Trail)
   +------------------+      +-------------------+     +-----------------+
-  |  CatBoost Model  |      |   Gemini 2.5      |     |  SQLite DB      |
-  |  & SHAP Engine   |      |   Flash API       |     |  (credit_risk)  |
+  |  CatBoost Model  |      | OpenAI GPT-5-mini |     |  SQLite DB      |
+  |  & SHAP Engine   |      | (via Azure API)   |     |  (credit_risk)  |
   +------------------+      +-------------------+     +-----------------+
 ```
 
 *   **Backend**: FastAPI, Uvicorn, Python 3.12 (asynchronous, high-performance API server).
 *   **Frontend**: Vanilla HTML5, CSS3 (Modern Glassmorphism & Dark Mode UI), and JavaScript.
 *   **Database**: SQLite (local schema tracking Users, Sessions, Predictions, and Decisions).
-*   **AI/LLM**: Google GenAI SDK (Gemini 2.5 Flash for natural language underwriting support).
+*   **AI/LLM**: OpenAI GPT-5-mini (used for natural language underwriting explanations).
 *   **Deployment**: Docker-packaged and deployed on **Render Free Web Service**, kept warm using a **GitHub Actions keep-warm ping workflow** running every 10 minutes.
 
 ---
@@ -109,7 +109,9 @@ Open [http://localhost:8000](http://localhost:8000) in your browser.
 ## 🔒 Environment Variables
 Create a `.env` file in the root directory to store your API keys and secrets:
 ```env
-GEMINI_API_KEY=your-gemini-api-key-here
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_BASE_URL=your-openai-azure-custom-endpoint-if-applicable
+LLM_MODEL=gpt-5-mini
 JWT_SECRET=super-secret-key-for-credit-risk-token-signing
 ```
 
