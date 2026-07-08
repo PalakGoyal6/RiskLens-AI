@@ -12,4 +12,4 @@ jobs:
       - name: Ping health endpoint
         run: |
           # Replace 'your-app' with your actual Render URL name when deploying
-          curl -f https://your-app.onrender.com/health || exit 0
+          curl -f https://risklens-ai-2e1e.onrender.com || exit 0
