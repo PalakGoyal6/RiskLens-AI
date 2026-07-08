@@ -19,4 +19,5 @@ COPY . .
 EXPOSE 8000
 
 # Start Uvicorn with a single worker to fit in Render's 512MB RAM free tier
-CMD uvicorn server:app --host 0.0.0.0 --port $PORT --workers 1
+# First run init_db.py to create and seed the SQLite database
+CMD python init_db.py && uvicorn server:app --host 0.0.0.0 --port $PORT --workers 1
