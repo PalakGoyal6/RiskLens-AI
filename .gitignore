@@ -26,9 +26,6 @@ catboost_info/
 *.db
 credit_risk.db
 
-# Model pickles
-models/*.pkl
-
 # Logs
 error_log.txt
 *.log
